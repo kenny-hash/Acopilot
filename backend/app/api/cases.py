@@ -1,4 +1,6 @@
 from io import BytesIO
+import logging
+import warnings
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from openpyxl import load_workbook
@@ -6,6 +8,7 @@ from openpyxl import load_workbook
 from app.schemas.case import CaseCreate, CaseOut, CaseUpdate
 
 router = APIRouter(prefix="/api/cases", tags=["cases"])
+logger = logging.getLogger(__name__)
 
 _cases_store: dict[int, CaseOut] = {}
 _case_id_counter = 0
@@ -49,33 +52,56 @@ def delete_case(case_id: int) -> None:
 async def import_cases(file: UploadFile = File(...)) -> list[CaseOut]:
     global _case_id_counter
 
+    logger.info("Import cases request received, filename=%s", file.filename)
+
     if not file.filename or not file.filename.lower().endswith((".xlsx", ".xlsm")):
+        logger.warning("Import rejected due to invalid file extension, filename=%s", file.filename)
         raise HTTPException(status_code=400, detail="Only .xlsx/.xlsm files are supported")
 
     payload = await file.read()
-    workbook = load_workbook(filename=BytesIO(payload), read_only=True, data_only=True)
+    logger.info("Excel upload payload read complete, filename=%s, size=%d bytes", file.filename, len(payload))
+
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+        workbook = load_workbook(filename=BytesIO(payload), read_only=True, data_only=True)
+    for warning_info in caught_warnings:
+        logger.warning(
+            "Warning while loading workbook, filename=%s, category=%s, message=%s",
+            file.filename,
+            warning_info.category.__name__,
+            str(warning_info.message),
+        )
     sheet = workbook.active
 
     header_row = next(sheet.iter_rows(min_row=1, max_row=1, values_only=True), None)
     if header_row is None:
         workbook.close()
+        logger.warning("Import failed because Excel file is empty, filename=%s", file.filename)
         raise HTTPException(status_code=400, detail="Excel file is empty")
 
     normalized_headers = [str(cell).strip().lower() if cell is not None else "" for cell in header_row]
-    data_headers = normalized_headers[1:]
+    depth_aliases = {"depth", "层级", "层次"}
+    fallback_offset = 1 if normalized_headers and normalized_headers[0] in depth_aliases else 0
     header_aliases: dict[str, tuple[str, ...]] = {
         "name": ("name", "名称", "用例名称"),
         "code": ("code", "编号", "用例编号"),
         "precondition": ("precondition", "前置条件", "预置条件"),
-        "steps": ("steps", "步骤", "测试步骤"),
+        "steps": ("steps", "步骤", "测试步骤", "设计描述"),
         "expected": ("expected", "预期", "预期结果"),
     }
     header_index: dict[str, int] = {}
     for field, aliases in header_aliases.items():
-        for i, header in enumerate(data_headers):
+        for i, header in enumerate(normalized_headers):
             if header and header in aliases:
                 header_index[field] = i
                 break
+    logger.info(
+        "Excel header parsed, filename=%s, headers=%s, detected_header_index=%s, fallback_offset=%d",
+        file.filename,
+        normalized_headers,
+        header_index,
+        fallback_offset,
+    )
 
     def _get_cell(cells: tuple, field: str, fallback_index: int) -> str:
         index = header_index.get(field, fallback_index)
@@ -84,22 +110,38 @@ async def import_cases(file: UploadFile = File(...)) -> list[CaseOut]:
         return str(cells[index]).strip()
 
     imported: list[CaseOut] = []
+    skipped_rows_missing_name = 0
+    skipped_rows_missing_required_fields = 0
+    skipped_rows_missing_required_field_details: list[str] = []
+    scanned_rows = 0
     for idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
         if row is None:
             continue
+        scanned_rows += 1
 
-        # 第一列是 Depth，不参与导入字段映射
-        row_data = row[1:] if len(row) > 1 else tuple()
-        name = _get_cell(row_data, "name", 0)
+        name = _get_cell(row, "name", fallback_offset)
         if not name:
+            skipped_rows_missing_name += 1
             continue
 
-        code = str(row[1]).strip() if len(row) > 1 and row[1] is not None else ""
-        precondition = str(row[2]).strip() if len(row) > 2 and row[2] is not None else ""
-        steps = str(row[3]).strip() if len(row) > 3 and row[3] is not None else ""
-        expected = str(row[4]).strip() if len(row) > 4 and row[4] is not None else ""
+        code = _get_cell(row, "code", fallback_offset + 1)
+        precondition = _get_cell(row, "precondition", fallback_offset + 2)
+        steps = _get_cell(row, "steps", fallback_offset + 3)
+        expected = _get_cell(row, "expected", fallback_offset + 4)
         if not steps or not expected:
             # CaseOut 要求 steps / expected 最少 1 个字符；缺失时跳过该行，避免 500
+            skipped_rows_missing_required_fields += 1
+            if len(skipped_rows_missing_required_field_details) < 5:
+                skipped_rows_missing_required_field_details.append(
+                    f"row={idx}, name={name!r}, code={code!r}, precondition={precondition!r}, steps={steps!r}, expected={expected!r}"
+                )
+            logger.debug(
+                "Skip row due to missing required field, filename=%s, row=%d, has_steps=%s, has_expected=%s",
+                file.filename,
+                idx,
+                bool(steps),
+                bool(expected),
+            )
             continue
 
         _case_id_counter += 1
@@ -115,8 +157,27 @@ async def import_cases(file: UploadFile = File(...)) -> list[CaseOut]:
         imported.append(created)
 
     workbook.close()
+    logger.info(
+        "Excel import completed, filename=%s, scanned_rows=%d, imported=%d, skipped_missing_name=%d, skipped_missing_steps_or_expected=%d",
+        file.filename,
+        scanned_rows,
+        len(imported),
+        skipped_rows_missing_name,
+        skipped_rows_missing_required_fields,
+    )
 
     if not imported:
+        logger.warning(
+            "Import failed: no valid rows, filename=%s, scanned_rows=%d, headers=%s, detected_header_index=%s, fallback_offset=%d, skipped_missing_name=%d, skipped_missing_steps_or_expected=%d, sample_skipped_rows=%s",
+            file.filename,
+            scanned_rows,
+            normalized_headers,
+            header_index,
+            fallback_offset,
+            skipped_rows_missing_name,
+            skipped_rows_missing_required_fields,
+            skipped_rows_missing_required_field_details,
+        )
         raise HTTPException(status_code=400, detail="No valid case rows found in the Excel file")
 
     return imported
