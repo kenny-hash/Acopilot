@@ -11,6 +11,16 @@ VITE_API_BASE_URL="${VITE_API_BASE_URL:-http://127.0.0.1:${BACKEND_PORT}/api}"
 
 command -v npm >/dev/null 2>&1 || { echo "[ERROR] npm 未安装"; exit 1; }
 
+print_python_help() {
+  echo "[ERROR] 未找到受支持的 Python 版本（需要 3.10/3.11/3.12）。"
+  echo "[ERROR] 当前依赖（pydantic==2.8.2 -> pydantic-core==2.20.1）在 Python 3.14 上会触发源码编译并要求 Rust。"
+  echo "[HINT] macOS 推荐安装 Python 3.12 后重试："
+  echo "       brew install python@3.12"
+  echo "       export PYTHON_BIN=$(brew --prefix)/opt/python@3.12/bin/python3.12"
+  echo "       bash scripts/dev_up.sh"
+  echo "[HINT] 如你使用 pyenv/asdf，也可先切换到 3.12，再执行本脚本。"
+}
+
 choose_python() {
   local candidates=(python3.12 python3.11 python3.10 python3)
   local py
@@ -27,10 +37,18 @@ choose_python() {
   return 1
 }
 
-PYTHON_BIN="$(choose_python || true)"
+PYTHON_BIN="${PYTHON_BIN:-}"
+if [ -n "$PYTHON_BIN" ] && ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+  echo "[ERROR] 指定的 PYTHON_BIN 不存在：$PYTHON_BIN"
+  exit 1
+fi
+
 if [ -z "$PYTHON_BIN" ]; then
-  echo "[ERROR] 未找到受支持的 Python 版本（需要 3.10/3.11/3.12）。"
-  echo "[ERROR] 当前依赖（pydantic-core==2.20.1）在 Python 3.14 上会触发源码编译并要求 Rust。"
+  PYTHON_BIN="$(choose_python || true)"
+fi
+
+if [ -z "$PYTHON_BIN" ]; then
+  print_python_help
   exit 1
 fi
 
