@@ -86,11 +86,16 @@ async def import_cases(file: UploadFile = File(...)) -> list[CaseOut]:
         "name": ("name", "名称", "用例名称"),
         "code": ("code", "编号", "用例编号"),
         "precondition": ("precondition", "前置条件", "预置条件"),
+        "design_desc": ("设计描述", "设计说明", "description", "desc"),
         "steps": ("steps", "步骤", "测试步骤"),
         "expected": ("expected", "预期", "预期结果"),
     }
+    normalized_aliases: dict[str, set[str]] = {
+        field: {alias.strip().lower() for alias in aliases}
+        for field, aliases in header_aliases.items()
+    }
     header_index: dict[str, int] = {}
-    for field, aliases in header_aliases.items():
+    for field, aliases in normalized_aliases.items():
         for i, header in enumerate(normalized_headers):
             if header and header in aliases:
                 header_index[field] = i
@@ -125,17 +130,25 @@ async def import_cases(file: UploadFile = File(...)) -> list[CaseOut]:
 
         code = _get_cell(row, "code", fallback_offset + 1)
         precondition = _get_cell(row, "precondition", fallback_offset + 2)
+        design_desc = _get_cell(row, "design_desc", fallback_offset + 3)
         steps = _get_cell(row, "steps", fallback_offset + 3)
         expected = _get_cell(row, "expected", fallback_offset + 4)
+
+        if not steps and design_desc:
+            steps = design_desc
+        if not expected and design_desc:
+            expected = design_desc
+
         if not steps or not expected:
             # CaseOut 要求 steps / expected 最少 1 个字符；缺失时跳过该行，避免 500
             skipped_rows_missing_required_fields += 1
             logger.debug(
-                "Skip row due to missing required field, filename=%s, row=%d, has_steps=%s, has_expected=%s",
+                "Skip row due to missing required field, filename=%s, row=%d, has_steps=%s, has_expected=%s, has_design_desc=%s",
                 file.filename,
                 idx,
                 bool(steps),
                 bool(expected),
+                bool(design_desc),
             )
             continue
 
