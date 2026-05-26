@@ -5,8 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BACKEND_DIR="$ROOT_DIR/backend"
 FRONTEND_DIR="$ROOT_DIR/frontend"
 
-BACKEND_PORT="${BACKEND_PORT:-8000}"
-FRONTEND_PORT="${FRONTEND_PORT:-5173}"
+BACKEND_PORT="${BACKEND_PORT:-8089}"
+FRONTEND_PORT="${FRONTEND_PORT:-8088}"
 VITE_API_BASE_URL="${VITE_API_BASE_URL:-http://127.0.0.1:${BACKEND_PORT}/api}"
 
 command -v npm >/dev/null 2>&1 || { echo "[ERROR] npm 未安装"; exit 1; }
