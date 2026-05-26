@@ -28,11 +28,20 @@ export default function AgentsPage() {
   }
 
   return (
-    <Card>
-      <h2>Agent配置</h2>
+    <div className="page-stack">
+      <div className="page-header">
+        <div>
+          <h2>Agent 配置</h2>
+          <p>统一管理模型提供商、参数与启用状态。</p>
+        </div>
+        <div className="status-chip">共 {items.length} 个 Agent</div>
+      </div>
+
+      <Card>
+      <h3>配置表单</h3>
       <p className="notice">当前版本不支持执行测试任务，仅支持配置与管理。</p>
       <p className="tips">可参考下方说明填写配置字段，避免字段含义不清导致配置错误。</p>
-      <div className="form-grid">
+      <div className="form-grid two-col">
         <div className="field-item">
           <label className="field-label">Agent名称（agent_name）</label>
           <Input placeholder="如：qa-assistant" value={form.agent_name} onChange={(e) => setForm({ ...form, agent_name: e.target.value })} />
@@ -69,22 +78,30 @@ export default function AgentsPage() {
           <small className="field-help">关闭后该Agent配置不会被用于业务流程。</small>
         </div>
 
-        <Button onClick={() => void save()}>{editingId ? '更新' : '新增'}</Button>
+        <div className="action-row">
+          <Button onClick={() => void save()}>{editingId ? '更新配置' : '新增配置'}</Button>
+          {editingId && <Button onClick={() => { setEditingId(null); setForm(emptyAgent) }}>取消编辑</Button>}
+        </div>
       </div>
+      </Card>
+
+      <Card>
+        <h3>Agent 列表</h3>
       <Table>
         <thead><tr><th>agent_name</th><th>provider</th><th>model</th><th>temperature</th><th>max_tokens</th><th>enabled</th><th>操作</th></tr></thead>
         <tbody>
           {items.map((item) => (
             <tr key={item.id}>
               <td>{item.agent_name}</td><td>{item.provider}</td><td>{item.model}</td><td>{item.temperature}</td><td>{item.max_tokens}</td><td>{item.enabled ? '是' : '否'}</td>
-              <td>
+              <td><div className="action-row compact">
                 <Button onClick={() => { setEditingId(item.id ?? null); setForm(item) }}>编辑</Button>
                 <Button onClick={() => item.id && agentService.remove(item.id).then(refresh)}>删除</Button>
-              </td>
+              </div></td>
             </tr>
           ))}
         </tbody>
       </Table>
-    </Card>
+      </Card>
+    </div>
   )
 }

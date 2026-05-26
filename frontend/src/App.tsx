@@ -6,23 +6,29 @@ import ApiParserPage from './pages/ApiParserPage'
 export default function App() {
   return (
     <div className="app-shell">
-      <aside className="sidebar card">
-        <div className="brand">业务控制台</div>
-        <div className="tips">通过左侧栏目切换不同业务模块</div>
+      <aside className="sidebar">
+        <div className="brand">Acopilot Admin</div>
+        <div className="tips">shadcn-admin 风格布局（侧边导航 + 顶栏 + 内容区）</div>
         <nav className="tabs">
-          <NavLink to="/cases">用例管理</NavLink>
-          <NavLink to="/agents">Agent 配置</NavLink>
-          <NavLink to="/api-parser">API 解析</NavLink>
+          <NavLink to="/cases">📄 用例管理</NavLink>
+          <NavLink to="/agents">🤖 Agent 配置</NavLink>
+          <NavLink to="/api-parser">🔌 API 解析</NavLink>
         </nav>
       </aside>
-      <main className="container">
-        <Routes>
-          <Route path="/" element={<CasesPage />} />
-          <Route path="/cases" element={<CasesPage />} />
-          <Route path="/agents" element={<AgentsPage />} />
-          <Route path="/api-parser" element={<ApiParserPage />} />
-        </Routes>
-      </main>
+      <section className="main-area">
+        <header className="topbar">
+          <h1>业务控制台</h1>
+          <span className="meta">Dashboard / Operations</span>
+        </header>
+        <main className="container">
+          <Routes>
+            <Route path="/" element={<CasesPage />} />
+            <Route path="/cases" element={<CasesPage />} />
+            <Route path="/agents" element={<AgentsPage />} />
+            <Route path="/api-parser" element={<ApiParserPage />} />
+          </Routes>
+        </main>
+      </section>
     </div>
   )
 }
