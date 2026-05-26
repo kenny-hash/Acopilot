@@ -4,6 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.agents import router as agents_router
 from app.api.cases import router as cases_router
 from app.api.api_parser import router as api_parser_router
+from app.api.collections import router as collections_router
+from app.api.strategies import router as strategies_router
+from app.api.tasks import router as tasks_router
 
 app = FastAPI(
     title="Acopilot Backend API",
@@ -32,3 +35,6 @@ app.include_router(cases_router)
 app.include_router(agents_router)
 
 app.include_router(api_parser_router)
+app.include_router(collections_router)
+app.include_router(strategies_router)
+app.include_router(tasks_router)
