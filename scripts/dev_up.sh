@@ -7,6 +7,7 @@ FRONTEND_DIR="$ROOT_DIR/frontend"
 
 BACKEND_PORT="${BACKEND_PORT:-8000}"
 FRONTEND_PORT="${FRONTEND_PORT:-5173}"
+VITE_API_BASE_URL="${VITE_API_BASE_URL:-http://127.0.0.1:${BACKEND_PORT}/api}"
 
 command -v npm >/dev/null 2>&1 || { echo "[ERROR] npm 未安装"; exit 1; }
 
@@ -69,12 +70,13 @@ BACKEND_PID=$!
 
 (
   cd "$FRONTEND_DIR"
-  npm run dev -- --host 0.0.0.0 --port "$FRONTEND_PORT"
+  VITE_API_BASE_URL="$VITE_API_BASE_URL" npm run dev -- --host 0.0.0.0 --port "$FRONTEND_PORT"
 ) &
 FRONTEND_PID=$!
 
 echo "[INFO] 后端运行中: http://127.0.0.1:${BACKEND_PORT}"
 echo "[INFO] 前端运行中: http://127.0.0.1:${FRONTEND_PORT}"
+echo "[INFO] 前端 API_BASE: ${VITE_API_BASE_URL}"
 echo "[INFO] 按 Ctrl+C 一键停止"
 
 wait -n "$BACKEND_PID" "$FRONTEND_PID"
