@@ -45,7 +45,11 @@ def _try_parse_openapi(text: str) -> ApiParseResult | None:
             warnings.append(f"path {path} 的定义不是对象，已跳过方法解析")
             continue
 
+        path_level_params = methods.get("parameters", []) if isinstance(methods.get("parameters", []), list) else []
+
         for method, operation in methods.items():
+            if str(method).lower() == "parameters":
+                continue
             normalized_method = str(method).upper()
             endpoint_warnings: list[str] = []
             if normalized_method not in _HTTP_METHODS:
@@ -55,26 +59,29 @@ def _try_parse_openapi(text: str) -> ApiParseResult | None:
             if isinstance(operation, dict):
                 raw_params = operation.get("parameters", [])
                 if isinstance(raw_params, list):
-                    for idx, raw_param in enumerate(raw_params):
-                        if not isinstance(raw_param, dict):
-                            endpoint_warnings.append(f"参数[{idx}] 不是对象")
-                            continue
-
-                        location = str(raw_param.get("in", "unknown")).lower()
-                        if location not in {"query", "path", "header"}:
-                            endpoint_warnings.append(
-                                f"参数 {raw_param.get('name', '<unknown>')} 的位置 '{location}' 暂不支持"
-                            )
-
-                        params.append(
-                            ApiParam(
-                                name=str(raw_param.get("name", "<unknown>")),
-                                location=location,
-                                required=bool(raw_param.get("required", False)),
-                            )
-                        )
+                    merged_params = [*path_level_params, *raw_params]
                 else:
+                    merged_params = path_level_params
                     endpoint_warnings.append("parameters 字段不是数组")
+
+                for idx, raw_param in enumerate(merged_params):
+                    if not isinstance(raw_param, dict):
+                        endpoint_warnings.append(f"参数[{idx}] 不是对象")
+                        continue
+
+                    location = str(raw_param.get("in", "unknown")).lower()
+                    if location not in {"query", "path", "header"}:
+                        endpoint_warnings.append(
+                            f"参数 {raw_param.get('name', '<unknown>')} 的位置 '{location}' 暂不支持"
+                        )
+
+                    params.append(
+                        ApiParam(
+                            name=str(raw_param.get("name", "<unknown>")),
+                            location=location,
+                            required=bool(raw_param.get("required", False)),
+                        )
+                    )
             else:
                 endpoint_warnings.append("operation 定义不是对象")
 
