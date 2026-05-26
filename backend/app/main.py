@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.agents import router as agents_router
 from app.api.cases import router as cases_router
@@ -8,6 +9,17 @@ app = FastAPI(
     title="Acopilot Backend API",
     description="用例与 Agent 配置管理接口。当前版本不包含用例执行能力。",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://127.0.0.1:8088",
+        "http://localhost:8088",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
