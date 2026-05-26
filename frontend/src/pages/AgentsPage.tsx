@@ -31,13 +31,44 @@ export default function AgentsPage() {
     <Card>
       <h2>Agent配置</h2>
       <p className="notice">当前版本不支持执行测试任务，仅支持配置与管理。</p>
+      <p className="tips">可参考下方说明填写配置字段，避免字段含义不清导致配置错误。</p>
       <div className="form-grid">
-        <Input placeholder="agent_name" value={form.agent_name} onChange={(e) => setForm({ ...form, agent_name: e.target.value })} />
-        <Select value={form.provider} onValueChange={(v) => setForm({ ...form, provider: v })} options={[{ label: 'OpenAI', value: 'openai' }, { label: 'Azure', value: 'azure' }]} />
-        <Input placeholder="model" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} />
-        <Input placeholder="temperature" type="number" value={form.temperature} onChange={(e) => setForm({ ...form, temperature: Number(e.target.value) })} />
-        <Input placeholder="max_tokens" type="number" value={form.max_tokens} onChange={(e) => setForm({ ...form, max_tokens: Number(e.target.value) })} />
-        <Switch checked={form.enabled} onCheckedChange={(checked) => setForm({ ...form, enabled: checked })} />
+        <div className="field-item">
+          <label className="field-label">Agent名称（agent_name）</label>
+          <Input placeholder="如：qa-assistant" value={form.agent_name} onChange={(e) => setForm({ ...form, agent_name: e.target.value })} />
+          <small className="field-help">用于区分不同Agent的显示名称，建议使用有业务含义的英文标识。</small>
+        </div>
+
+        <div className="field-item">
+          <label className="field-label">服务提供商（provider）</label>
+          <Select value={form.provider} onValueChange={(v) => setForm({ ...form, provider: v })} options={[{ label: 'OpenAI', value: 'openai' }, { label: 'Azure', value: 'azure' }]} />
+          <small className="field-help">选择模型来源平台，不同平台对应的模型名称格式可能不同。</small>
+        </div>
+
+        <div className="field-item">
+          <label className="field-label">模型名称（model）</label>
+          <Input placeholder="如：gpt-4o-mini" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} />
+          <small className="field-help">填写平台实际可用的模型ID，需与provider匹配。</small>
+        </div>
+
+        <div className="field-item">
+          <label className="field-label">随机性（temperature）</label>
+          <Input placeholder="建议 0~1" type="number" value={form.temperature} onChange={(e) => setForm({ ...form, temperature: Number(e.target.value) })} />
+          <small className="field-help">值越低回答越稳定，值越高回答越发散；常用范围 0~1。</small>
+        </div>
+
+        <div className="field-item">
+          <label className="field-label">最大输出长度（max_tokens）</label>
+          <Input placeholder="如：2048" type="number" value={form.max_tokens} onChange={(e) => setForm({ ...form, max_tokens: Number(e.target.value) })} />
+          <small className="field-help">限制单次生成的最大token数，数值越大响应可能越长、成本越高。</small>
+        </div>
+
+        <div className="field-item">
+          <label className="field-label">是否启用（enabled）</label>
+          <Switch checked={form.enabled} onCheckedChange={(checked) => setForm({ ...form, enabled: checked })} />
+          <small className="field-help">关闭后该Agent配置不会被用于业务流程。</small>
+        </div>
+
         <Button onClick={() => void save()}>{editingId ? '更新' : '新增'}</Button>
       </div>
       <Table>
