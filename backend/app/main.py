@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.api.agents import router as agents_router
 from app.api.cases import router as cases_router
+from app.api.api_parser import router as api_parser_router
 
 app = FastAPI(
     title="Acopilot Backend API",
@@ -17,3 +18,4 @@ def health() -> dict[str, str]:
 
 app.include_router(cases_router)
 app.include_router(agents_router)
+app.include_router(api_parser_router)
