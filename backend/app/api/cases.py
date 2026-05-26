@@ -94,15 +94,13 @@ async def import_cases(file: UploadFile = File(...)) -> list[CaseOut]:
         if not name:
             continue
 
-        code = _get_cell(row_data, "code", 1)
-        precondition = _get_cell(row_data, "precondition", 2)
-        steps = _get_cell(row_data, "steps", 3)
-        expected = _get_cell(row_data, "expected", 4)
-        # 兼容历史/简化模板：缺失必填列时给默认值，避免整批导入失败
-        if not steps:
-            steps = "待补充"
-        if not expected:
-            expected = "待补充"
+        code = str(row[1]).strip() if len(row) > 1 and row[1] is not None else ""
+        precondition = str(row[2]).strip() if len(row) > 2 and row[2] is not None else ""
+        steps = str(row[3]).strip() if len(row) > 3 and row[3] is not None else ""
+        expected = str(row[4]).strip() if len(row) > 4 and row[4] is not None else ""
+        if not steps or not expected:
+            # CaseOut 要求 steps / expected 最少 1 个字符；缺失时跳过该行，避免 500
+            continue
 
         _case_id_counter += 1
         created = CaseOut(
