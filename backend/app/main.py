@@ -18,4 +18,5 @@ def health() -> dict[str, str]:
 
 app.include_router(cases_router)
 app.include_router(agents_router)
+
 app.include_router(api_parser_router)

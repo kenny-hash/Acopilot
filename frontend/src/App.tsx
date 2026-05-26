@@ -1,6 +1,7 @@
 import { NavLink, Route, Routes } from 'react-router-dom'
 import CasesPage from './pages/CasesPage'
 import AgentsPage from './pages/AgentsPage'
+import ApiParserPage from './pages/ApiParserPage'
 
 export default function App() {
   return (
@@ -11,6 +12,7 @@ export default function App() {
         <nav className="tabs">
           <NavLink to="/cases">用例管理</NavLink>
           <NavLink to="/agents">Agent 配置</NavLink>
+          <NavLink to="/api-parser">API 解析</NavLink>
         </nav>
       </aside>
       <main className="container">
@@ -18,6 +20,7 @@ export default function App() {
           <Route path="/" element={<CasesPage />} />
           <Route path="/cases" element={<CasesPage />} />
           <Route path="/agents" element={<AgentsPage />} />
+          <Route path="/api-parser" element={<ApiParserPage />} />
         </Routes>
       </main>
     </div>
