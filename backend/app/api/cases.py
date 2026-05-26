@@ -119,7 +119,7 @@ async def import_cases(file: UploadFile = File(...)) -> list[CaseOut]:
     skipped_rows_missing_required_fields = 0
     scanned_rows = 0
     for idx, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
-        if row is None:
+        if row is None or not any(cell is not None and str(cell).strip() for cell in row):
             continue
         scanned_rows += 1
 
@@ -134,13 +134,12 @@ async def import_cases(file: UploadFile = File(...)) -> list[CaseOut]:
         steps = _get_cell(row, "steps", fallback_offset + 3)
         expected = _get_cell(row, "expected", fallback_offset + 4)
 
-        if not steps and design_desc:
-            steps = design_desc
-        if not expected and design_desc:
-            expected = design_desc
+        if not steps:
+            steps = expected or design_desc or "待补充"
+        if not expected:
+            expected = steps or design_desc or "待补充"
 
         if not steps or not expected:
-            # CaseOut 要求 steps / expected 最少 1 个字符；缺失时跳过该行，避免 500
             skipped_rows_missing_required_fields += 1
             logger.debug(
                 "Skip row due to missing required field, filename=%s, row=%d, has_steps=%s, has_expected=%s, has_design_desc=%s",
