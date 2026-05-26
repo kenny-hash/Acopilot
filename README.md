@@ -6,6 +6,41 @@
 
 ---
 
+
+## 本地开发（当前仓库可直接运行）
+
+> 下面是**当前代码仓库**可用的本地启动方式（不是上文的目标架构示例）。
+
+### 方式一：一键启动前后端
+
+```bash
+bash scripts/dev_up.sh
+```
+
+默认端口：
+- 后端 FastAPI: `http://127.0.0.1:8000`
+- 前端 Vite: `http://127.0.0.1:5173`
+
+可通过环境变量覆盖：
+
+```bash
+BACKEND_PORT=18000 FRONTEND_PORT=15173 bash scripts/dev_up.sh
+```
+
+### 方式二：手动分别启动
+
+```bash
+# backend
+python3 -m venv backend/.venv
+source backend/.venv/bin/activate
+pip install -r backend/requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --app-dir backend
+
+# frontend（新开终端）
+npm --prefix frontend install
+npm --prefix frontend run dev -- --host 0.0.0.0 --port 5173
+```
+
 ## 1. 项目目标
 
 本项目旨在实现一个用于存储设备 RESTful API 测试的统一平台，重点解决以下问题：
