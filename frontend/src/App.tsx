@@ -4,16 +4,22 @@ import AgentsPage from './pages/AgentsPage'
 
 export default function App() {
   return (
-    <div className="container">
-      <nav className="tabs">
-        <NavLink to="/cases">用例管理</NavLink>
-        <NavLink to="/agents">Agent配置</NavLink>
-      </nav>
-      <Routes>
-        <Route path="/" element={<CasesPage />} />
-        <Route path="/cases" element={<CasesPage />} />
-        <Route path="/agents" element={<AgentsPage />} />
-      </Routes>
+    <div className="app-shell">
+      <aside className="sidebar card">
+        <div className="brand">业务控制台</div>
+        <div className="tips">通过左侧栏目切换不同业务模块</div>
+        <nav className="tabs">
+          <NavLink to="/cases">用例管理</NavLink>
+          <NavLink to="/agents">Agent 配置</NavLink>
+        </nav>
+      </aside>
+      <main className="container">
+        <Routes>
+          <Route path="/" element={<CasesPage />} />
+          <Route path="/cases" element={<CasesPage />} />
+          <Route path="/agents" element={<AgentsPage />} />
+        </Routes>
+      </main>
     </div>
   )
 }
