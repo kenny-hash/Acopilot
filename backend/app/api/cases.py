@@ -62,7 +62,8 @@ async def import_cases(file: UploadFile = File(...)) -> list[CaseOut]:
         raise HTTPException(status_code=400, detail="Excel file is empty")
 
     normalized_headers = [str(cell).strip().lower() if cell is not None else "" for cell in header_row]
-    data_headers = normalized_headers[1:]
+    depth_aliases = {"depth", "层级", "层次"}
+    fallback_offset = 1 if normalized_headers and normalized_headers[0] in depth_aliases else 0
     header_aliases: dict[str, tuple[str, ...]] = {
         "name": ("name", "名称", "用例名称"),
         "code": ("code", "编号", "用例编号"),
@@ -72,7 +73,7 @@ async def import_cases(file: UploadFile = File(...)) -> list[CaseOut]:
     }
     header_index: dict[str, int] = {}
     for field, aliases in header_aliases.items():
-        for i, header in enumerate(data_headers):
+        for i, header in enumerate(normalized_headers):
             if header and header in aliases:
                 header_index[field] = i
                 break
@@ -88,16 +89,14 @@ async def import_cases(file: UploadFile = File(...)) -> list[CaseOut]:
         if row is None:
             continue
 
-        # 第一列是 Depth，不参与导入字段映射
-        row_data = row[1:] if len(row) > 1 else tuple()
-        name = _get_cell(row_data, "name", 0)
+        name = _get_cell(row, "name", fallback_offset)
         if not name:
             continue
 
-        code = str(row[1]).strip() if len(row) > 1 and row[1] is not None else ""
-        precondition = str(row[2]).strip() if len(row) > 2 and row[2] is not None else ""
-        steps = str(row[3]).strip() if len(row) > 3 and row[3] is not None else ""
-        expected = str(row[4]).strip() if len(row) > 4 and row[4] is not None else ""
+        code = _get_cell(row, "code", fallback_offset + 1)
+        precondition = _get_cell(row, "precondition", fallback_offset + 2)
+        steps = _get_cell(row, "steps", fallback_offset + 3)
+        expected = _get_cell(row, "expected", fallback_offset + 4)
         if not steps or not expected:
             # CaseOut 要求 steps / expected 最少 1 个字符；缺失时跳过该行，避免 500
             continue
