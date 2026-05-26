@@ -69,6 +69,9 @@ async def import_cases(file: UploadFile = File(...)) -> list[CaseOut]:
         precondition = str(row[2]).strip() if len(row) > 2 and row[2] is not None else ""
         steps = str(row[3]).strip() if len(row) > 3 and row[3] is not None else ""
         expected = str(row[4]).strip() if len(row) > 4 and row[4] is not None else ""
+        if not steps or not expected:
+            # CaseOut 要求 steps / expected 最少 1 个字符；缺失时跳过该行，避免 500
+            continue
 
         _case_id_counter += 1
         created = CaseOut(
