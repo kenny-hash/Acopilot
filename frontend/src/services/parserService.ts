@@ -30,7 +30,7 @@ export class ParseApiError extends Error {
 
 export async function parseApi(content: string, formatHint?: string): Promise<ParseApiResponse> {
   try {
-    return await request<ParseApiResponse>('/api/parser/parse', {
+    return await request<ParseApiResponse>('/parser/parse', {
       method: 'POST',
       body: JSON.stringify({ content, format_hint: formatHint } satisfies ParseApiPayload)
     })

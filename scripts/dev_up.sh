@@ -16,7 +16,7 @@ print_python_help() {
   echo "[ERROR] 当前依赖（pydantic==2.8.2 -> pydantic-core==2.20.1）在 Python 3.14 上会触发源码编译并要求 Rust。"
   echo "[HINT] macOS 推荐安装 Python 3.12 后重试："
   echo "       brew install python@3.12"
-  echo "       export PYTHON_BIN=$(brew --prefix)/opt/python@3.12/bin/python3.12"
+  echo '       export PYTHON_BIN=$(brew --prefix)/opt/python@3.12/bin/python3.12'
   echo "       bash scripts/dev_up.sh"
   echo "[HINT] 如你使用 pyenv/asdf，也可先切换到 3.12，再执行本脚本。"
 }
@@ -41,6 +41,13 @@ PYTHON_BIN="${PYTHON_BIN:-}"
 if [ -n "$PYTHON_BIN" ] && ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
   echo "[ERROR] 指定的 PYTHON_BIN 不存在：$PYTHON_BIN"
   exit 1
+fi
+
+if [ -z "$PYTHON_BIN" ] && [ -x "$BACKEND_DIR/.venv/bin/python" ]; then
+  VENV_VER="$("$BACKEND_DIR/.venv/bin/python" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || echo unknown)"
+  if [[ "$VENV_VER" =~ ^3\.(10|11|12)$ ]]; then
+    PYTHON_BIN="$BACKEND_DIR/.venv/bin/python"
+  fi
 fi
 
 if [ -z "$PYTHON_BIN" ]; then
@@ -82,7 +89,7 @@ trap cleanup EXIT INT TERM
 
 (
   cd "$BACKEND_DIR"
-  uvicorn app.main:app --host 0.0.0.0 --port "$BACKEND_PORT"
+  uvicorn app.main:app --host 0.0.0.0 --port "$BACKEND_PORT" --reload
 ) &
 BACKEND_PID=$!
 
@@ -97,4 +104,8 @@ echo "[INFO] 前端运行中: http://127.0.0.1:${FRONTEND_PORT}"
 echo "[INFO] 前端 API_BASE: ${VITE_API_BASE_URL}"
 echo "[INFO] 按 Ctrl+C 一键停止"
 
-wait -n "$BACKEND_PID" "$FRONTEND_PID"
+while kill -0 "$BACKEND_PID" 2>/dev/null && kill -0 "$FRONTEND_PID" 2>/dev/null; do
+  sleep 1
+done
+
+wait "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null || true
