@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { ChangeEvent, useEffect, useRef, useState } from 'react'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
 import { Input } from '../components/ui/input'
@@ -12,6 +12,7 @@ export default function CasesPage() {
   const [items, setItems] = useState<CaseItem[]>([])
   const [form, setForm] = useState<CaseItem>(emptyForm)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const importInputRef = useRef<HTMLInputElement | null>(null)
 
   const refresh = async () => setItems(await caseService.list().catch(() => []))
   useEffect(() => {
@@ -26,6 +27,17 @@ export default function CasesPage() {
     await refresh()
   }
 
+  const onImportClick = () => importInputRef.current?.click()
+
+  const onImportFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    await caseService.importExcel(file)
+    event.target.value = ''
+    await refresh()
+  }
+
   return (
     <Card>
       <h2>用例管理</h2>
@@ -37,6 +49,14 @@ export default function CasesPage() {
         <Textarea placeholder="测试步骤" value={form.steps} onChange={(e) => setForm({ ...form, steps: e.target.value })} />
         <Textarea placeholder="预期结果" value={form.expected} onChange={(e) => setForm({ ...form, expected: e.target.value })} />
         <Button onClick={() => void save()}>{editingId ? '更新' : '新增'}</Button>
+        <Button onClick={onImportClick}>导入用例</Button>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept=".xlsx,.xlsm"
+          style={{ display: 'none' }}
+          onChange={(e) => void onImportFileChange(e)}
+        />
       </div>
       <Table>
         <thead><tr><th>名称</th><th>编号</th><th>预置条件</th><th>测试步骤</th><th>预期结果</th><th>操作</th></tr></thead>
