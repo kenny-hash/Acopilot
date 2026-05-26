@@ -3,6 +3,7 @@ import CasesPage from './pages/CasesPage'
 import AgentsPage from './pages/AgentsPage'
 import ApiParserPage from './pages/ApiParserPage'
 import PlatformPage from './pages/PlatformPage'
+import EnvironmentsPage from './pages/EnvironmentsPage'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
           <NavLink to="/agents">🤖 Agent 配置</NavLink>
           <NavLink to="/api-parser">🔌 API 解析</NavLink>
           <NavLink to="/platform">🧪 测试集与任务</NavLink>
+          <NavLink to="/environments">🌐 测试环境</NavLink>
         </nav>
       </aside>
       <section className="main-area">
@@ -29,6 +31,7 @@ export default function App() {
             <Route path="/agents" element={<AgentsPage />} />
             <Route path="/api-parser" element={<ApiParserPage />} />
             <Route path="/platform" element={<PlatformPage />} />
+            <Route path="/environments" element={<EnvironmentsPage />} />
           </Routes>
         </main>
       </section>

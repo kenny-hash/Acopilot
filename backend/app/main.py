@@ -7,6 +7,7 @@ from app.api.api_parser import router as api_parser_router
 from app.api.collections import router as collections_router
 from app.api.strategies import router as strategies_router
 from app.api.tasks import router as tasks_router
+from app.api.environments import router as environments_router
 
 app = FastAPI(
     title="Acopilot Backend API",
@@ -38,3 +39,5 @@ app.include_router(api_parser_router)
 app.include_router(collections_router)
 app.include_router(strategies_router)
 app.include_router(tasks_router)
+
+app.include_router(environments_router)
