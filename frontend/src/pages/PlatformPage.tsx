@@ -33,6 +33,7 @@ export default function PlatformPage() {
   const runTask = async () => {
     if (!collections[0]) return
     await platformService.runTask({ name: '删除卷高危验证任务', environment, collection_id: collections[0].id!, strategy_id: null, case_ids: [1, 2], allow_high_risk: false, auto_cleanup: true, retry_on_fail: false })
+    await platformService.runTask({ name: '删除卷高危验证任务', environment: 'dev-lab', collection_id: collections[0].id!, strategy_id: null, case_ids: [1, 2], allow_high_risk: false, auto_cleanup: true, retry_on_fail: false })
     await refresh()
   }
 
