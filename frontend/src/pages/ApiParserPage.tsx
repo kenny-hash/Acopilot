@@ -42,18 +42,27 @@ export default function ApiParserPage() {
   }
 
   return (
-    <Card>
-      <h2>API 解析</h2>
-      <p className="tips">支持粘贴 OpenAPI JSON 或 cURL 命令，点击“解析”后生成接口清单。</p>
-      <div className="form-grid">
-        <Textarea placeholder="粘贴 OpenAPI JSON 或 cURL" value={content} onChange={(e) => setContent(e.target.value)} style={{ minHeight: 180 }} />
-        <Input placeholder="formatHint（可选，如 openapi/json/curl）" value={formatHint} onChange={(e) => setFormatHint(e.target.value)} />
-        <div className="action-row">
-          <Button disabled={!canParse} onClick={() => void onParse()}>{loading ? '解析中...' : '解析'}</Button>
-          <Button onClick={() => setContent(exampleTemplate)}>示例模板</Button>
-          <Button onClick={() => { setContent(''); setFormatHint(''); setItems([]); setWarnings([]); setError('') }}>清空</Button>
+    <div className="page-stack">
+      <div className="page-header">
+        <div>
+          <h2>API 解析</h2>
+          <p>支持 OpenAPI JSON/cURL 粘贴解析，输出接口清单与字段详情。</p>
         </div>
+        <div className="status-chip">解析结果 {items.length} 条</div>
       </div>
+
+      <Card>
+        <h3>输入与解析</h3>
+        <div className="form-grid">
+          <Textarea placeholder="粘贴 OpenAPI JSON 或 cURL" value={content} onChange={(e) => setContent(e.target.value)} style={{ minHeight: 180 }} />
+          <Input placeholder="formatHint（可选，如 openapi/json/curl）" value={formatHint} onChange={(e) => setFormatHint(e.target.value)} />
+          <div className="action-row">
+            <Button disabled={!canParse} onClick={() => void onParse()}>{loading ? '解析中...' : '开始解析'}</Button>
+            <Button onClick={() => setContent(exampleTemplate)}>示例模板</Button>
+            <Button onClick={() => { setContent(''); setFormatHint(''); setItems([]); setWarnings([]); setError('') }}>清空</Button>
+          </div>
+        </div>
+      </Card>
 
       {warnings.length > 0 && (
         <div className="notice warning-notice">
@@ -66,35 +75,38 @@ export default function ApiParserPage() {
 
       {error && <p className="error-text">解析失败：{error}</p>}
 
-      <Table>
-        <thead><tr><th>Method</th><th>Path</th><th>Summary</th><th>详情</th></tr></thead>
-        <tbody>
-          {items.map((item, index) => (
-            <Fragment key={`${item.method}-${item.path}-${index}`}>
-              <tr>
-                <td>{item.method}</td>
-                <td>{item.path}</td>
-                <td>{item.summary || '-'}</td>
-                <td><Button onClick={() => toggleRow(index)}>{expandedRows[index] ? '收起' : '展开'}</Button></td>
-              </tr>
-              {expandedRows[index] && (
-                <tr key={`detail-${item.method}-${item.path}-${index}`}>
-                  <td colSpan={4}>
-                    <div className="detail-block">
-                      <h4>Params</h4>
-                      <pre>{JSON.stringify(item.params ?? {}, null, 2)}</pre>
-                      <h4>Body</h4>
-                      <pre>{JSON.stringify(item.body ?? {}, null, 2)}</pre>
-                      <h4>Responses</h4>
-                      <pre>{JSON.stringify(item.responses ?? {}, null, 2)}</pre>
-                    </div>
-                  </td>
+      <Card>
+        <h3>接口列表</h3>
+        <Table>
+          <thead><tr><th>Method</th><th>Path</th><th>Summary</th><th>详情</th></tr></thead>
+          <tbody>
+            {items.map((item, index) => (
+              <Fragment key={`${item.method}-${item.path}-${index}`}>
+                <tr>
+                  <td>{item.method}</td>
+                  <td>{item.path}</td>
+                  <td>{item.summary || '-'}</td>
+                  <td><Button onClick={() => toggleRow(index)}>{expandedRows[index] ? '收起' : '展开'}</Button></td>
                 </tr>
-              )}
-            </Fragment>
-          ))}
-        </tbody>
-      </Table>
-    </Card>
+                {expandedRows[index] && (
+                  <tr key={`detail-${item.method}-${item.path}-${index}`}>
+                    <td colSpan={4}>
+                      <div className="detail-block">
+                        <h4>Params</h4>
+                        <pre>{JSON.stringify(item.params ?? {}, null, 2)}</pre>
+                        <h4>Body</h4>
+                        <pre>{JSON.stringify(item.body ?? {}, null, 2)}</pre>
+                        <h4>Responses</h4>
+                        <pre>{JSON.stringify(item.responses ?? {}, null, 2)}</pre>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            ))}
+          </tbody>
+        </Table>
+      </Card>
+    </div>
   )
 }
